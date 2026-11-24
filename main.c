@@ -6,12 +6,13 @@
 /*   By: bfaechti <benjamin.faechtig@gmail.com>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/11/16 15:15:02 by bfaechti          #+#    #+#             */
-/*   Updated: 2026/11/16 15:38:30 by bfaechti         ###   ########.fr       */
+/*   Updated: 2026/11/23 15:33:56 by bfaechti         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
 #include "libasm.h"
 
 int main()
@@ -38,9 +39,17 @@ int main()
 	/* --------------------- */
 
 	/* ----- ft_write ------ */
+	char buffer1[100];
+
+	printf("write : %ld\n", ft_write(0, buffer1, 10));
+	printf("errno : %d\n", errno);
 	/* --------------------- */
 
 	/* ------ ft_read ------ */
+	char buffer2[100];
+
+	printf("read : %ld\n", ft_read(0, buffer2, 10));
+	printf("errno : %d\n", errno);
 	/* --------------------- */
 
 	/* ----- ft_strdup ----- */

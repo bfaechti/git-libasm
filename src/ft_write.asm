@@ -6,7 +6,7 @@
 #    By: bfaechti <benjamin.faechtig@gmail.com>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/11/19 11:31:51 by bfaechti          #+#    #+#              #
-#    Updated: 2026/11/19 13:27:38 by bfaechti         ###   ########.fr        #
+#    Updated: 2026/11/23 15:00:18 by bfaechti         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -14,7 +14,7 @@ section .text
 	global ft_write
 	extern __errno_location
 
-ft_write:
+ft_read:
 	mov rax, 1	;
 	syscall		;
 
@@ -23,9 +23,11 @@ ft_write:
 	ret			;
 
 error:
-	neg rax					;
-	mov rdi, rax			;
+	neg rax		;
+	mov rdi, rax;
+
 	call __errno_location	;
 	mov [rax], edi			;
-	mov rax, -1				;
-	ret						;
+
+	mov rax, -1	;
+	ret			;
