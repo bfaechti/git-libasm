@@ -11,36 +11,38 @@
 # **************************************************************************** #
 
 NAME = libasm.a
+OBJDIR = obj
 
 CC = gcc
 NASM = nasm
-AR = ar
 RM = rm -f
 
 CFLAGS = -Wall -Wextra -Werror
 NASMFLAGS = -f elf64
 
-SRC =	src/ft_calloc.asm
-		src/ft_read.asm
-		src/ft_strcmp.asm
-		src/ft_strcpy.asm
-		src/ft_strdup.asm
-		src/ft_strlen.asm
+SRC =	src/ft_calloc.asm \
+		src/ft_read.asm \
+		src/ft_strcmp.asm \
+		src/ft_strcpy.asm \
+		src/ft_strdup.asm \
+		src/ft_strlen.asm \
 		src/ft_write.asm
 
-OBJ = $(SRC:.s=.o)
+OBJ = $(patsubst src/%.asm,$(OBJDIR)/%.o,$(SRC))
 
 all: $(NAME)
 
-$(NAME): &(OBJ)
-	$(AR) rcs $(NAME) $(OBJ)
+$(NAME): $(OBJ) main.c include/libasm.h
+	$(CC) $(CFLAGS) -I include main.c $(OBJ) -o $@
 
-%.o: %.s
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
+
+$(OBJDIR)/%.o: src/%.asm | $(OBJDIR)
 	$(NASM) $(NASMFLAGS) $< -o $@
 
 test: $(NAME)
-	$(CC) $(CFLAGS) main.c -I include -L. -lasm -o test
-	./test
+	./$(NAME)
 
 clean:
 	$(RM) $(OBJ)

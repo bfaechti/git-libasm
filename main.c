@@ -5,56 +5,122 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: bfaechti <benjamin.faechtig@gmail.com>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/11/16 15:15:02 by bfaechti          #+#    #+#             */
-/*   Updated: 2026/11/23 15:33:56 by bfaechti         ###   ########.fr       */
+/*   Created: 2026/11/24 15:26:27 by bfaechti          #+#    #+#             */
+/*   Updated: 2026/11/24 15:36:15 by bfaechti         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <stdio.h>
-#include <string.h>
 #include <errno.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include "libasm.h"
 
-int main()
+static int	g_failures;
+
+static void	check(const char *name, int passed)
 {
-	const char *str = "Hello Assembler";
+	if (passed)
+		printf("[OK]    %s\n", name);
+	else
+	{
+		printf("[FAIL]  %s\n", name);
+		g_failures++;
+	}
+}
 
-	/* ----- ft_strlen ----- */
-	printf("strlen: %zu\n", strlen(str));
-	printf("ft_strlen: %zu\n", ft_strlen(str));
-	/* --------------------- */
+static int	test_write(const char *text)
+{
+	int		pipefd[2];
+	char	buffer[32];
+	size_t	length;
+	ssize_t	written;
+	ssize_t	read_size;
 
-	/* ----- ft_strcpy ----- */
-	char dst1[50];
-	char dst2[50];
+	length = strlen(text);
+	if (pipe(pipefd) == -1)
+		return (0);
+	written = ft_write(pipefd[1], text, length);
+	close(pipefd[1]);
+	read_size = read(pipefd[0], buffer, sizeof(buffer));
+	close(pipefd[0]);
+	return (written == (ssize_t)length && read_size == (ssize_t)length
+		&& memcmp(buffer, text, length) == 0);
+}
 
-	strcpy(dst1, str);
-	ft_strcpy(dst2, str);
+static int	test_read(const char *text)
+{
+	int		pipefd[2];
+	char	buffer[32];
+	size_t	length;
+	ssize_t	written;
+	ssize_t	read_size;
 
-	printf("strcpy original : %s\n", dst1);
-	printf("ft_strcpy       : %s\n", dst2);
-	/* --------------------- */
+	length = strlen(text);
+	if (pipe(pipefd) == -1)
+		return (0);
+	written = write(pipefd[1], text, length);
+	close(pipefd[1]);
+	read_size = ft_read(pipefd[0], buffer, sizeof(buffer));
+	close(pipefd[0]);
+	return (written == (ssize_t)length && read_size == (ssize_t)length
+		&& memcmp(buffer, text, length) == 0);
+}
 
-	/* ----- ft_strcmp ----- */
-	/* --------------------- */
+int	main(void)
+{
+	const char	*text;
+	char		copy[32];
+	char		*duplicate;
+	int			*values;
+	void		*overflow;
+	size_t		index;
 
-	/* ----- ft_write ------ */
-	char buffer1[100];
+	text = "Hello Assembler";
+	printf("libasm function tests\n\n");
 
-	printf("write : %ld\n", ft_write(0, buffer1, 10));
-	printf("errno : %d\n", errno);
-	/* --------------------- */
+	check("ft_strlen", ft_strlen(text) == strlen(text)
+		&& ft_strlen("") == 0);
+	check("ft_strcpy", ft_strcpy(copy, text) == copy
+		&& strcmp(copy, text) == 0);
+	check("ft_strcmp", ft_strcmp("ABC", "ABC") == 0
+		&& ft_strcmp("ABC", "ABD") < 0
+		&& ft_strcmp("ABD", "ABC") > 0
+		&& ft_strcmp("\x80", "\x7f") > 0);
 
-	/* ------ ft_read ------ */
-	char buffer2[100];
+	check("ft_write: write to pipe", test_write(text));
+	errno = 0;
+	check("ft_write: EBADF handling",
+		ft_write(-1, text, 1) == -1 && errno == EBADF);
 
-	printf("read : %ld\n", ft_read(0, buffer2, 10));
-	printf("errno : %d\n", errno);
-	/* --------------------- */
+	check("ft_read: read from pipe", test_read(text));
+	errno = 0;
+	check("ft_read: EBADF handling",
+		ft_read(-1, copy, sizeof(copy)) == -1 && errno == EBADF);
 
-	/* ----- ft_strdup ----- */
-	/* --------------------- */
+	values = ft_calloc(5, sizeof(*values));
+	index = 0;
+	while (values != NULL && index < 5 && values[index] == 0)
+		index++;
+	check("ft_calloc: zero-initialized memory",
+		values != NULL && index == 5);
+	free(values);
+	errno = 0;
+	overflow = ft_calloc(SIZE_MAX, 2);
+	check("ft_calloc: overflow detection",
+		overflow == NULL && errno == ENOMEM);
+	free(overflow);
 
-	/* ----- ft_calloc ----- */
-	/* --------------------- */
+	duplicate = ft_strdup(text);
+	check("ft_strdup", duplicate != NULL && duplicate != text
+		&& strcmp(duplicate, text) == 0);
+	free(duplicate);
+
+	if (g_failures == 0)
+		printf("\nAll tests passed.\n");
+	else
+		printf("\n%d test(s) failed.\n", g_failures);
+	return (g_failures != 0);
 }
