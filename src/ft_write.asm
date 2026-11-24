@@ -1,33 +1,21 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    ft_write.asm                                       :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: bfaechti <benjamin.faechtig@gmail.com>     +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2026/11/19 11:31:51 by bfaechti          #+#    #+#              #
-#    Updated: 2026/11/23 15:00:18 by bfaechti         ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
 
 section .text
 	global ft_write
 	extern __errno_location
 
-ft_read:
-	mov rax, 1	;
-	syscall		;
+ft_write:
+	mov eax, 1
+	syscall
+	test rax, rax
+	js .error
+	ret
 
-	cmp rax, 0	;
-	jl error	;
-	ret			;
-
-error:
-	neg rax		;
-	mov rdi, rax;
-
-	call __errno_location	;
-	mov [rax], edi			;
-
-	mov rax, -1	;
-	ret			;
+.error:
+	push rbx
+	neg eax
+	mov ebx, eax
+	call __errno_location wrt ..plt
+	mov [rax], ebx
+	mov rax, -1
+	pop rbx
+	ret
